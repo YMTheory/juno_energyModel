@@ -7,3 +7,5 @@ batch_process.cc --> read output files from nPEMap_corr1.cc and do gaussian fitt
 uniform_term.cc --> Similarly, do fitting for data and also do MC sampling to get whole CD resolution(w/ FV cut) and compare with data.
 
 residual_uniform_rsl.cc --> compare resol v.s. evis for different cases.
+
+uniform_req.cc --> draw resolution change with linear assumption residual non-uniformity
