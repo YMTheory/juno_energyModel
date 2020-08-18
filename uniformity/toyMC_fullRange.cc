@@ -6,13 +6,27 @@ void draw_NU(double *f);
 
 double NPE_smear(double* x, double* par) {
     double val = par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
+
+     sigma2 fitting 
     if(val <= 0)
         return 0;
     else {
         double fval = TMath::Sqrt(val);    
         return fval;
     }
+
+    //if(val < 0) return 0;
+    //return val;
 }
+
+double abcModel(double* x, double* par) {
+    double a = par[0];
+    double b = par[1];
+    double c = par[2];
+    double E = x[0];
+    return TMath::Sqrt(a/E+b+c/E/E);
+}
+
 
 void read_corr()
 {
@@ -51,7 +65,8 @@ void read_corr()
 void toyMC_fullRange()
 {
     TF1* fNPEsmear = new TF1("fNPEsmear", NPE_smear, 0, 12000, 3);
-    fNPEsmear->SetParameters(-3.69505e2, 1.30168, 1.90109e-05);
+    fNPEsmear->SetParameters(-3.69505e2, 1.30168, 1.90109e-05);   // sigma2 fitting relation
+    //fNPEsmear->SetParameters(2.06408e+01, 1.40885e-02, -4.04637e-07);  // sigma fitting relation
 
     //draw NPE smear :
     //TGraph* gNPEsmear = new TGraph();
@@ -98,19 +113,21 @@ void toyMC_fullRange()
     //draw_NU(factor);
     TGraphErrors* gResol_real[N];
     TGraphErrors* gResol_ideal;
+    TGraphErrors* gResol_center;
     TH1D* hTotPE_real = new TH1D("hTotPE_real", "", 2400, 0, 12000);
     TH1D* hTotPE_ideal = new TH1D("hTotPE_ideal", "", 2400, 0, 12000);
+    TH1D* hTotPE_center = new TH1D("hTotPE_center", "", 2400, 0, 12000);
     for(int iloop=0; iloop<N; iloop++) {
         cout <<  "LOOPI ================> " << iloop << endl;
         gResol_real[iloop] = new TGraphErrors();
-        if( iloop==0 ) gResol_ideal = new TGraphErrors();
+        if( iloop==0 ) { gResol_ideal = new TGraphErrors(); gResol_center = new TGraphErrors(); }
         for(int jloop=0; jloop<20; jloop++) {
             hTotPE_real->Reset();
-            if(iloop==0) hTotPE_ideal->Reset();
+            if(iloop==0) { hTotPE_ideal->Reset(); hTotPE_center->Reset(); }
             double npe = (jloop+2)*500;
             //cout << " LOOPJ ===> " <<  jloop << "   NPE ===> " << npe << endl;
             idx = 0;
-            while(idx<50000) {  // sampling uniformly
+            while(idx<100000) {  // sampling uniformly
                 int ibin = int(gRandom->Uniform(0,totalbins));
                 if(ibin <=100 and ibin>=170 ) continue;  // FV cut
                 int npe1 = npe*((rsd_ratio[ibin]-rsd_ratio[0])/rsd_ratio[0]*factor[iloop]+1);  //npe in current bin
@@ -119,6 +136,9 @@ void toyMC_fullRange()
                 if( iloop==0 ) {
                     int totpe_ideal = int(gRandom->Gaus(npe, fNPEsmear->Eval(npe/pe_array[ibin]*pe_array[0])));
                     hTotPE_ideal->Fill(totpe_ideal);
+
+                    int totpe_center = int(gRandom->Gaus(npe, fNPEsmear->Eval(npe)));
+                    hTotPE_center->Fill(totpe_center);
                 }
                 //cout << ibin << " " << npe1 << " " << fNPEsmear->Eval(npe1) << " " << npe << " " << fNPEsmear->Eval(npe/pe_array[ibin]*pe_array[0]) << endl; 
                 idx++;
@@ -143,6 +163,17 @@ void toyMC_fullRange()
                 double rsl2_err = TMath::Sqrt(sigma2_err*sigma2_err/mu2/mu2 + mu2_err*mu2_err*sigma2*sigma2/mu2/mu2/mu2/mu2);
                 gResol_ideal->SetPoint(jloop, mu2, rsl2);
                 gResol_ideal->SetPointError(jloop, 0, rsl2_err);
+
+                hTotPE_center->Fit("gaus", "Q0");
+                TF1* f3 = (TF1*)hTotPE_center->GetFunction("gaus");
+                double mu3 = f3->GetParameter(1);
+                double mu3_err = f3->GetParError(1);
+                double sigma3 = f3->GetParameter(2);
+                double sigma3_err = f3->GetParError(2);
+                double rsl3 = sigma3/mu3;
+                double rsl3_err = TMath::Sqrt(sigma3_err*sigma3_err/mu3/mu3 + mu3_err*mu3_err*sigma3*sigma3/mu3/mu3/mu3/mu3);
+                gResol_center->SetPoint(jloop, mu3, rsl3);
+                gResol_center->SetPointError(jloop, 0, rsl3_err);
             }
 
             //cout << jloop << hTotPE_ideal->GetMean() << " " << hTotPE_ideal->GetStdDev() << endl;
@@ -158,6 +189,14 @@ void toyMC_fullRange()
             gResol_ideal->SetLineWidth(2);
             mg1->Add(gResol_ideal);
             led1->AddEntry(gResol_ideal,"ideal", "PL");
+
+o           gResol_center->SetMarkerColor(25);
+
+            gResol_center->SetMarkerStyle(26);
+            gResol_center->SetLineColor(25);
+            gResol_center->SetLineWidth(2);
+            mg1->Add(gResol_center);
+            led1->AddEntry(gResol_center,"center", "PL");
         }
         gResol_real[iloop]->SetMarkerColor(color1[iloop]);
         gResol_real[iloop]->SetMarkerStyle(24);
@@ -170,11 +209,36 @@ void toyMC_fullRange()
     delete hTotPE_real;
     delete hTotPE_ideal;
 
-
     TCanvas* cc = new TCanvas(); 
     mg1->SetTitle("ToyMC Resolution; NPE; resolution");
     mg1->Draw("APL");
     led1->Draw("SAME");
+    
+    // fitting with abc model:
+    //TF1* fAbcModel1 = new TF1("fAbcModel1", abcModel, 0, 12000, 3);
+    //fAbcModel1->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
+    //gResol_ideal->Fit(fAbcModel1);
+    //double *par1 = fAbcModel1->GetParameters();
+    //TF1* fAbcModel2 = new TF1("fAbcModel2", abcModel, 0, 12000, 3);
+    //fAbcModel2->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
+    //gResol_real[0]->Fit(fAbcModel2);
+    //double *par2 = fAbcModel2->GetParameters();
+    //TF1* fAbcModel3 = new TF1("fAbcModel3", abcModel, 0, 12000, 3);
+    //fAbcModel3->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
+    //gResol_center->Fit(fAbcModel3);
+    //TGraph* gExtra = new TGraph();
+    //for(int i=0; i<1000; i++) {
+    //    double npe2 = 12*(i+100);
+    //    gExtra->SetPoint(i, npe2, fAbcModel2->Eval(npe2)- fAbcModel1->Eval(npe2));
+    //    //gExtra->SetPoint(i, npe2, TMath::Sqrt(fAbcModel2->Eval(npe2)*fAbcModel2->Eval(npe2) - fAbcModel1->Eval(npe2)*fAbcModel1->Eval(npe2)));
+    //}
+    //TCanvas* c1 = new TCanvas(); c1->cd();
+    //gExtra->SetLineWidth(2);
+    //gExtra->SetLineColor(45);
+    //gExtra->SetTitle("extra resolution term; NPE; extra term");
+    //gExtra->Draw("AL");
+    //mg1->Draw("APL");
+    //led1->Draw("SAME");
 }
 
 
