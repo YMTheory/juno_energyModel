@@ -9,3 +9,5 @@ uniform_term.cc --> Similarly, do fitting for data and also do MC sampling to ge
 residual_uniform_rsl.cc --> compare resol v.s. evis for different cases.
 
 uniform_req.cc --> draw resolution change with linear assumption residual non-uniformity
+
+average_corr.cc --> use to calc average nPE v.s. radius^3 relationn after correction

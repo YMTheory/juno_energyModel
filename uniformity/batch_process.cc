@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
         throw "Wrong Input Parameters Number!";
         return 0;
     }
-    int doFit = 0;
+    int doFit = 1;
     cout << "do fitting in current process? " << doFit << endl;
 
     double R_cut = 15000;
@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
     }
 
 
+    t1->B
     Float_t m_evis; TBranch* b_evis;
     Float_t m_edepR; TBranch* b_edepR;
 

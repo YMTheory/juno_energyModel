@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 
 
     int startNo = atoi(argv[1]);
-    int nFiles = 1;//10;
+    int nFiles = 10;
     for(int i=startNo; i<startNo+nFiles; i++) {
         //string no = to_string(i);
         stringstream ss;

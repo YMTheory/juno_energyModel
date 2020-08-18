@@ -1,6 +1,6 @@
 void uniform_req()
 {
-    /*
+    
     const int N = 8;
     double rsd_uniform[N] = {0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.07, 0.10};
     double rsl[N] = {2.622, 2.634, 2.672, 2.744, 2.828, 2.938, 3.216, 3.726};
@@ -12,7 +12,7 @@ void uniform_req()
     g1->SetMarkerColor(35);
     g1->SetLineColor(35);
     g1->SetLineWidth(2);
-    g1->SetTitle(";residual non-uniformity; resolution");
+    g1->SetTitle(";residual non-uniformity; resolution(\%)");
     g1->Draw("APL");
 
     TGraph *g2 = new TGraph();
@@ -28,16 +28,16 @@ void uniform_req()
 
     TGraph* gZone = new TGraph();
     gZone->SetPoint(0, 0, 0);
-    gZone->SetPoint(1, 0.01, 0);
-    gZone->SetPoint(2, 0.01, 4);
+    gZone->SetPoint(1, 0.02, 0);
+    gZone->SetPoint(2, 0.02, 4);
     gZone->SetPoint(3, 0, 4);
     gZone->SetFillColor(kCyan);
     gZone->SetFillStyle(3004);
     gZone->Draw("F SAME");
 
 //    cc->SaveAs("./plots/uniform_on_rsl.pdf");
-*/
 
+/*
     TCanvas* cg2 = new TCanvas(); cg2->Draw(); cg2->SetGrid();
     double scale = 3350/2.22;
     const int N1 = 5;
@@ -86,4 +86,5 @@ void uniform_req()
     g6->SetLineColor(36);
     g6->SetLineWidth(2);
     g6->Draw("APL");
+    */
 }

@@ -1,7 +1,11 @@
 extern double rsd_ratio[500]={0.}; 
 double residual(int ibin);
-void read_corr();
+void read_corr(int index);
 void customed_corr();
+TGraphErrors* gResol_data;
+const double energy_scale = 3350/2.22;
+const int mom_num = 5;
+int mom_array[mom_num] = {1,2,4,6,8};
 
 void toyMC_study()
 {
@@ -47,15 +51,13 @@ void toyMC_study()
 
     // totpe info w/o correction : 
 
-    const int mom_num = 5;
-    int mom_array[mom_num] = {1,2,4,6,8};
     int nbins[5] = {200, 400, 400, 1000, 1000};
     double start[5] = {1000, 2000, 5000, 8000, 10000};
     double stop[5] = {2000, 4000, 7000, 13000, 15000};
     TGraphErrors* gResol = new TGraphErrors();
     TGraphErrors* gResol_ideal = new TGraphErrors();
     TGraphErrors* gResol_diff = new TGraphErrors();
-    double energy_scale = 3350/2.22;
+    gResol_data = new TGraphErrors();
 
     for(int i=0; i<mom_num; i++){
         string path = "../../uniformity/electron/totalpe2r2theta_40rbins20thetabins_"; string suffix = "MeV.root";
@@ -86,8 +88,8 @@ void toyMC_study()
             sigma_array[idx] = TMath::Sqrt(pe_array[idx]*pe_array[idx]*p2 + pe_array[idx]*p1 + p0);
         }
 
-        //read_corr();
-        customed_corr();
+        read_corr(i);
+        //customed_corr();
 
         TH1D* hTotPE = new TH1D("hTotPE", "", nbins[i], start[i], stop[i]);
         TH1D* hTotPE_ideal = new TH1D("hTotPE_ideal", "", nbins[i], start[i], stop[i]);
@@ -96,7 +98,7 @@ void toyMC_study()
         double scale = pe_array[0]; double scale_sigma = sigma_array[0];
         while(idx<100000) {
             int ibin = int(gRandom->Uniform(0,totalbins));
-            if(ibin >=180 ) continue;
+            if(ibin >=120 ) continue;
             int totpe1 = int(gRandom->Gaus(scale, sigma_array[ibin]*scale/pe_array[ibin]));
             hTotPE_ideal->Fill(totpe1);
             //int totpe = int(gRandom->Gaus(pe_array[ibin], sigma_array[ibin]));
@@ -132,7 +134,7 @@ void toyMC_study()
         gResol_ideal->SetPoint(i, mu2/energy_scale, rsl2);
         gResol_ideal->SetPointError(i, mu2_err/energy_scale, rsl2_err);
 
-        gResol_diff->SetPoint(i, mu2/energy_scale, (rsl1-rsl2)/rsl2);
+        //gResol_diff->SetPoint(i, mu2/energy_scale, (rsl1-rsl2));
         
 
         //hTotPE_center->Fit("gaus","0Q");
@@ -173,19 +175,40 @@ void toyMC_study()
     gResol->SetTitle("Resolution; Evis/MeV; resolution");
     gResol->GetYaxis()->SetRangeUser(0,0.03);
     gResol->Draw("APL");
-    gResol_ideal->Draw("PL SAME");
+    //gResol_ideal->Draw("PL SAME");
+
+
+    /// scale evis as the same: 
+    double *x1 = gResol->GetX();
+    for(int ii=0; ii<mom_num; ii++) {
+        gResol_data->SetPointX(ii, x1[ii]);
+    }
+
+    /////////
+    gResol_data->SetMarkerStyle(20);
+    gResol_data->SetMarkerColor(42);
+    gResol_data->SetLineColor(42);
+    gResol_data->SetLineWidth(2);
+    gResol_data->Draw("PL SAME");
 
     TLegend* ll = new TLegend();
-    ll->AddEntry(gResol, "1\% linear residual non-uniformity", "L");
-    ll->AddEntry(gResol_ideal, "ideal: no residual non-uniformity", "L");
+    ll->AddEntry(gResol, "simul residual non-uniformity toyMC", "L");
+    //ll->AddEntry(gResol, "2\% linear residual non-uniformity", "L");
+    ll->AddEntry(gResol_ideal, "full simulation", "L");
     ll->Draw("SAME");
     
+    double *y1 = gResol->GetY();
+    double *y2 = gResol_data->GetY();
+    for(int i1=0; i1<mom_num; i1++) {
+        gResol_diff->SetPoint(i1, x1[i1], (y2[i1]-y1[i1]));
+    }
+
     TCanvas* cg4 = new TCanvas(); cg4->SetGrid();
     gResol_diff->SetMarkerStyle(25);
     gResol_diff->SetMarkerColor(42);
     gResol_diff->SetLineColor(42);
     gResol_diff->SetLineWidth(2);
-    gResol_diff->SetTitle("resolution difference; Evis/MeV; relative increase");
+    gResol_diff->SetTitle("resolution difference; Evis/MeV; absolute increase");
     gResol_diff->Draw("APL");
 }
 
@@ -194,22 +217,27 @@ double residual(int ibin) {
     return 1 - 0.003/12*ibin;
 }
 
-void read_corr()
+void read_corr(int index)
 {
     Float_t m_evis; TBranch* b_evis;
     Float_t m_edepZ; TBranch* b_edepZ;
     Float_t m_edepR; TBranch* b_edepR;
 
-    TFile* ff = TFile::Open("../../uniformity/electron/pe1MeV.root");
+    string path = "../../uniformity/electron/pe"; string suffix = "MeV.root";
+    string name = path+to_string(mom_array[index])+suffix;
+
+    TFile* ff = TFile::Open(name.c_str());
     TTree* tree = (TTree*)ff->Get("petree");
     tree->SetBranchAddress("evis", &m_evis, &b_evis);
     tree->SetBranchAddress("edepR", &m_edepR, &b_edepR);
     tree->SetBranchAddress("edepZ", &m_edepZ, &b_edepZ);
-    TProfile2D* prof = new TProfile2D("prof", "", 20, 0, 18*18*18, 10, -1, 1, 0.8, 1.4);
+    TProfile2D* prof = new TProfile2D("prof", "", 20, 0, 18*18*18, 10, -1, 1, 0., 12);
+    TH1D* hTotPE_FV = new TH1D("hTotPE_FV", "", 2400, 0, 12);
     double delta_R = 18*18*18./20.;
     for(int i=0; i<tree->GetEntries(); i++) {
         tree->GetEntry(i);
         prof->Fill(m_edepR/1000*m_edepR/1000*m_edepR/1000, m_edepZ/m_edepR, m_evis);
+        if(m_edepR<15000) {hTotPE_FV->Fill(m_evis);}
     }
 
     int idx = 0;
@@ -219,9 +247,29 @@ void read_corr()
             idx++;
         }
     }
+
+    hTotPE_FV->Fit("gaus", "Q");
+    TF1* f1 = (TF1*)hTotPE_FV->GetFunction("gaus");
+    double mu1 = f1->GetParameter(1);
+    double mu1_err = f1->GetParError(1);
+    double sigma1 = f1->GetParameter(2);
+    double sigma1_err = f1->GetParError(2);
+    double rsl1 = sigma1/mu1;
+    double rsl1_err = TMath::Sqrt(sigma1_err*sigma1_err/mu1/mu1 + mu1_err*mu1_err*sigma1*sigma1/mu1/mu1/mu1/mu1);
+
+    cout << index << " " << mu1 << " " << rsl1 << endl;
+
+    gResol_data->SetPoint(index, mu1, rsl1);
+    gResol_data->SetPointError(index, mu1_err, rsl1_err);
+
     //TCanvas* cc = new TCanvas();
     //prof->Draw("COLZ");
     //cc->SaveAs("corr.pdf");
+    
+    //ff->Close();
+    //delete hTotPE_FV;
+    //delete tree;
+    //delete ff;
 
 }
 
@@ -230,7 +278,7 @@ void customed_corr()
     int idx = 0;
     for(int i=0; i<20; i++) {
         for(int j=0; j<10; j++) {
-            rsd_ratio[idx] = 1 - 0.01/20.*i; idx++;
+            rsd_ratio[idx] = 1 - 0.02/20.*i; idx++;
         }
     }
 }
