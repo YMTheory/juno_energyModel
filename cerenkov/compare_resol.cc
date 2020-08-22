@@ -20,8 +20,8 @@ void compare_resol()
 
     Int_t m_totpe; TBranch* b_totpe;
     Float_t m_ratio; TBranch* b_ratio;
-
-    for(int i=0; i<filename.size(); i++) {
+uuuuu
+    for(int i=0; i<filename.size(); i++) 
         cout << "Processing " << filename[i] << endl;
         TFile* file = TFile::Open((path+filename[i]).c_str());
         TTree* evt = (TTree*)file->Get("evt");

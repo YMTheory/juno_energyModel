@@ -13,3 +13,7 @@ uniform_req.cc --> draw resolution change with linear assumption residual non-un
 average_corr.cc --> use to calc average nPE v.s. radius^3 relationn after correction
 
 toyMC_fullRange.cc --> predict resolution curve by MC sampling in full energy range
+
+create_average_map.cc --> create secondary correction map (average among all energies)
+
+data_valid.cc --> used to validate MC resultes from two MC scripts

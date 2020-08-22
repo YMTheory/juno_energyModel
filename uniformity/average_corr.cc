@@ -83,7 +83,7 @@ void average_corr()
         ge1[i]->SetLineColor(color[i]);
         ge1[i]->SetMarkerStyle(25);
         ge1[i]->SetMarkerColor(color[i]);
-        ge1[i]->SetLineStyle(kDotted);
+        //ge1[i]->SetLineStyle(kDotted);
 
         mg->Add(ge1[i]);
         ll->AddEntry(ge1[i], label1[i], "LP");
