@@ -4,8 +4,8 @@
 """ Plot template scripts """
 import matplotlib.pyplot as plt
 
-def plot_func(x, y, ll):
-    plt.plot(x, y, label=ll)
+def plot_func(x, y, ll, myfmt="-"):
+    plt.plot(x, y, myfmt, label=ll)
 
 
 def show():
