@@ -47,7 +47,7 @@ class data_valid{
         }
 
 
-        TGraphErrors* fit_data() {
+        TGraphErrors* fit_data_err() {
             TGraphErrors* ge = new TGraphErrors();
             for(int i=0; i<m_histN; i++) {
                 pe_hist[i]->Fit("gaus", "Q0");
@@ -64,6 +64,25 @@ class data_valid{
             }
             return ge;
         }
+
+        TGraph* fit_data() {
+            TGraph* ge = new TGraphErrors();
+            for(int i=0; i<m_histN; i++) {
+                pe_hist[i]->Fit("gaus", "Q0");
+                TF1* f1 = (TF1*)pe_hist[i]->GetFunction("gaus");
+                double mu1 = f1->GetParameter(1);
+                double mu1_err = f1->GetParError(1);
+                double sigma1 = f1->GetParameter(2);
+                double sigma1_err = f1->GetParError(2);
+                double rsl1 = sigma1/mu1;
+                double rsl1_err = TMath::Sqrt(sigma1_err*sigma1_err/mu1/mu1 + mu1_err*mu1_err*sigma1*sigma1/mu1/mu1/mu1/mu1);
+                
+                ge->SetPoint(i, mu1, rsl1);
+                cout << i << " " << mu1 << " "<< rsl1 <<endl;
+            }
+            return ge;
+        }
+
 
     private:
         int m_histN;

@@ -96,6 +96,82 @@ void create_average_map() {
     TCanvas* c1= new TCanvas();
     gg->Draw("APL");
 
+
+    double cos_theta[10];
+    for(int i=0; i<10; i++) {cos_theta[i] = 2./10.*i-1;}
+    TMultiGraph *mg = new TMultiGraph();
+    TGraph* t0 = new TGraph();
+    TGraph* t1 = new TGraph();
+    TGraph* t2 = new TGraph();
+    TGraph* t3 = new TGraph();
+    TGraph* t4 = new TGraph();
+    TGraph* t5 = new TGraph();
+    for(int i=0; i<10; i++) {
+        t0->SetPoint(i, cos_theta[i], average[i]);
+        t1->SetPoint(i, cos_theta[i], average[i+30]);
+        t2->SetPoint(i, cos_theta[i], average[i+60]);
+        t3->SetPoint(i, cos_theta[i], average[i+120]);
+        t4->SetPoint(i, cos_theta[i], average[i+150]);
+        t5->SetPoint(i, cos_theta[i], average[i+170]);
+    }
+    for(int i=0; i<6; i++) {
+        t0->SetLineColor(34);
+        t0->SetMarkerSize(1);
+        t0->SetMarkerStyle(24);
+        t0->SetLineWidth(2);
+        t0->SetMarkerColor(34);
+
+        t1->SetLineColor(36);
+        t1->SetMarkerSize(1);
+        t1->SetMarkerStyle(24);
+        t1->SetLineWidth(2);
+        t1->SetMarkerColor(36);
+
+        t2->SetLineColor(40);
+        t2->SetMarkerSize(1);
+        t2->SetMarkerStyle(24);
+        t2->SetLineWidth(2);
+        t2->SetMarkerColor(40);
+
+        t3->SetLineColor(44);
+        t3->SetMarkerSize(1);
+        t3->SetMarkerStyle(24);
+        t3->SetLineWidth(2);
+        t3->SetMarkerColor(44);
+
+        t4->SetLineColor(48);
+        t4->SetMarkerSize(1);
+        t4->SetMarkerStyle(24);
+        t4->SetLineWidth(2);
+        t4->SetMarkerColor(48);
+
+        t5->SetLineColor(28);
+        t5->SetMarkerSize(1);
+        t5->SetMarkerStyle(24);
+        t5->SetLineWidth(2);
+        t5->SetMarkerColor(28);
+
+        mg->Add(t0);
+        mg->Add(t1);
+        mg->Add(t2);
+        mg->Add(t3);
+        mg->Add(t4);
+        mg->Add(t5);
+    }
+
+
+    TLegend* ll = new TLegend();
+    ll->AddEntry(t0, "0-6.63m");
+    ll->AddEntry(t1, "9.56-10.53m");
+    ll->AddEntry(t2, "12.05-12.68m");
+    ll->AddEntry(t3, "15.18-15.59m");
+    ll->AddEntry(t4, "16.35-16.71m");
+    ll->AddEntry(t5, "17.05-17.38m");
+
+
+    TCanvas* cg = new TCanvas();
+    mg->Draw("APL");
+    ll->Draw("SAME");
     //TFile* ff = new TFile("subDet-corr-smear500mm.root", "recreate");
     //gg->Write();
     //ff->Close();

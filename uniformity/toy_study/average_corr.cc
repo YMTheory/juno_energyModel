@@ -62,6 +62,7 @@ void average_corr()
     Color_t color1[N1] = {28, 30, 32, 34};
     TString label1[N1] = {"Cs137", "K40", "O16", "Ge68"};
 
+    TLegend* lg = new TLegend();
     TGraphErrors* ge1[N1];
     string path1 = "/junofs/users/yumiao/simulation/energy_model/uniformity/gamma/analysis_";
     string suffix1 = ".root";
@@ -86,7 +87,7 @@ void average_corr()
         //ge1[i]->SetLineStyle(kDotted);
 
         mg->Add(ge1[i]);
-        ll->AddEntry(ge1[i], label1[i], "LP");
+        lg->AddEntry(ge1[i], label1[i], "LP");
     }
 
     // average curve :
@@ -117,4 +118,5 @@ void average_corr()
     TCanvas* cc = new TCanvas();
     mg->Draw("APL");
     ll->Draw("SAME");
+    lg->Draw("SAME");
 }

@@ -1,3 +1,6 @@
 model/__pycache__/
 *.pdf
 *.root
+*.txt
+model/examples
+uniform/toy_study/plots

@@ -130,12 +130,12 @@ void toyMC_fullRange()
         gResol_center_data->SetPoint(i, mu2, rsl2);
         gResol_center_data->SetPointError(i, 0, rsl2_err);
     }
-    gResol_center_data->SetLineColor(9);
-    gResol_center_data->SetLineWidth(2);
-    gResol_center_data->SetMarkerStyle(21);
-    gResol_center_data->SetMarkerColor(9);
-    mg1->Add(gResol_center_data);
-    led1->AddEntry(gResol_center_data, "center simData", "PL");
+    //gResol_center_data->SetLineColor(9);
+    //gResol_center_data->SetLineWidth(2);
+    //gResol_center_data->SetMarkerStyle(21);
+    //gResol_center_data->SetMarkerColor(9);
+    //mg1->Add(gResol_center_data);
+    //led1->AddEntry(gResol_center_data, "center simData", "PL");
     /*********************************************************/
 
 
@@ -182,24 +182,29 @@ void toyMC_fullRange()
 
     //const int N = 5;
     Color_t color1[N] = {36, 38, 40, 42, 44};
-    Color_t color2[1] = {48};
-    TString label1[5] = {"scale factor: 1.0", "scale factor: 2.0", "scale factor: 3.0", "scale factor: 4.0", "scale factor: 5.0"};
+    Color_t color2[N] = {30, 46, 42, 38, 35};
+    TString label1[N] = {"1st correction", "scale factor: 2.0", "scale factor: 3.0", "scale factor: 4.0", "scale factor: 5.0"};
+    TString label2[N] = {"2nd correction", "scale factor: 2.0", "scale factor: 3.0", "scale factor: 4.0", "scale factor: 5.0"};
     double factor[N] = {1, 2, 3, 4, 5};
     //draw_NU(factor);
     TGraphErrors* gResol_real[N];
+    TGraphErrors* gResol_real2[N];
     TGraphErrors* gResol_smear[N];
     TGraphErrors* gResol_ideal;
     TGraphErrors* gResol_center;
     TH1D* hTotPE_real = new TH1D("hTotPE_real", "", 2400, 0, 12000);
+    TH1D* hTotPE_real2 = new TH1D("hTotPE_real2", "", 2400, 0, 12000);
     TH1D* hTotPE_ideal = new TH1D("hTotPE_ideal", "", 2400, 0, 12000);
     TH1D* hTotPE_center = new TH1D("hTotPE_center", "", 2400, 0, 12000);
     for(int iloop=0; iloop<1; iloop++) {
         cout <<  "LOOPI ================> " << iloop << endl;
         gResol_real[iloop] = new TGraphErrors();
+        gResol_real2[iloop] = new TGraphErrors();
         gResol_smear[iloop] = new TGraphErrors();
         if( iloop==0 ) { gResol_ideal = new TGraphErrors(); gResol_center = new TGraphErrors(); }
         for(int jloop=0; jloop<20; jloop++) {
             hTotPE_real->Reset();
+            hTotPE_real2->Reset();
             if(iloop==0) { hTotPE_ideal->Reset(); hTotPE_center->Reset(); }
             double npe = (jloop+2)*500;
             //cout << " LOOPJ ===> " <<  jloop << "   NPE ===> " << npe << endl;
@@ -212,9 +217,10 @@ void toyMC_fullRange()
                 int npe1 = npe*((rsd_ratio[ibin]-rsd_ratio[0])/rsd_ratio[0]*factor[iloop]+1);  //npe in current bin
                 //int npe1 = npe*((rsd_ratio[ibin]-rsd_ratio[0])/rsd_ratio[0]*factor[iloop]+1)/gSecCorr->GetPointY(ibin);  // do secondary correction
                 int totpe_real = int(gRandom->Gaus(npe1, fNPEsmear->Eval(npe1)));
-                //totpe_real = int(totpe_real/gSecCorr->GetPointY(ibin));  // secondary correction
+                int totpe_real2 = int(totpe_real/gSecCorr->GetPointY(ibin));  // secondary correction
                 //cout << ibin << " " << gSecCorr->GetPointY(ibin) << endl;
                 hTotPE_real->Fill(totpe_real);
+                hTotPE_real2->Fill(totpe_real2);
                 if( iloop==0 ) {
                     //int totpe_ideal = int(gRandom->Gaus(npe/pe_array[0]*pe_array[ibin], fNPEsmear->Eval(npe/pe_array[0]*pe_array[ibin])));
                     //totpe_ideal = int(totpe_ideal / pe_array[ibin] * pe_array[0]);
@@ -236,6 +242,14 @@ void toyMC_fullRange()
             double sigma1_err = f1->GetParError(2);
             double rsl1 = sigma1/mu1;
             double rsl1_err = (sigma1_err*sigma1_err/mu1/mu1 + mu1_err*mu1_err*sigma1*sigma1/mu1/mu1/mu1/mu1);
+            hTotPE_real2->Fit("gaus", "Q0");
+            TF1* f4 = (TF1*)hTotPE_real2->GetFunction("gaus");
+            double mu4 = f4->GetParameter(1);
+            double mu4_err = f4->GetParError(1);
+            double sigma4 = f4->GetParameter(2);
+            double sigma4_err = f4->GetParError(2);
+            double rsl4 = sigma4/mu4;
+            double rsl4_err = (sigma4_err*sigma4_err/mu4/mu4 + mu4_err*mu4_err*sigma4*sigma4/mu4/mu4/mu4/mu4);
             if(iloop == 0) {
                 hTotPE_ideal->Fit("gaus", "Q0");
                 TF1* f2 = (TF1*)hTotPE_ideal->GetFunction("gaus");
@@ -264,12 +278,14 @@ void toyMC_fullRange()
 
             gResol_real[iloop]->SetPoint(jloop, mu1, rsl1);
             gResol_real[iloop]->SetPointError(jloop, 0, rsl1_err);
+            gResol_real2[iloop]->SetPoint(jloop, mu4, rsl4);
+            gResol_real2[iloop]->SetPointError(jloop, 0, rsl4_err);
 
         }
         if(iloop == 0) {
-            gResol_ideal->SetMarkerColor(color2[iloop]);
+            gResol_ideal->SetMarkerColor(48);
             gResol_ideal->SetMarkerStyle(25);
-            gResol_ideal->SetLineColor(color2[iloop]);
+            gResol_ideal->SetLineColor(48);
             gResol_ideal->SetLineWidth(2);
             mg1->Add(gResol_ideal);
             led1->AddEntry(gResol_ideal,"ideal", "PL");
@@ -278,8 +294,8 @@ void toyMC_fullRange()
             gResol_center->SetMarkerStyle(26);
             gResol_center->SetLineColor(25);
             gResol_center->SetLineWidth(2);
-            mg1->Add(gResol_center);
-            led1->AddEntry(gResol_center,"center", "PL");
+            //mg1->Add(gResol_center);
+            //led1->AddEntry(gResol_center,"center", "PL");
         }
         gResol_real[iloop]->SetMarkerColor(color1[iloop]);
         gResol_real[iloop]->SetMarkerStyle(24);
@@ -287,6 +303,13 @@ void toyMC_fullRange()
         gResol_real[iloop]->SetLineWidth(2);
         mg1->Add(gResol_real[iloop]);
         led1->AddEntry(gResol_real[iloop], label1[iloop], "LP");
+
+        gResol_real2[iloop]->SetMarkerColor(color2[iloop]);
+        gResol_real2[iloop]->SetMarkerStyle(24);
+        gResol_real2[iloop]->SetLineColor(color2[iloop]);
+        gResol_real2[iloop]->SetLineWidth(2);
+        mg1->Add(gResol_real2[iloop]);
+        led1->AddEntry(gResol_real2[iloop], label2[iloop], "LP");
     }
 
     delete hTotPE_real;
@@ -306,36 +329,36 @@ void toyMC_fullRange()
     //gResol_data->Draw("PL SAME");
 
     // fitting with abc model:
-    gStyle->SetOptFit(1111);
-    TF1* fAbcModel_ideal = new TF1("fAbcModel_ideal", abcModel, 0, 12000, 3);
-    fAbcModel_ideal->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
-    gResol_ideal->Fit(fAbcModel_ideal);
-    TF1* fAbcModel_real = new TF1("fAbcModel_real", abcModel, 0, 12000, 3);
-    fAbcModel_real->SetParameters(1.3, 6.5e-5, -300);
-    gResol_real[0]->Fit(fAbcModel_real);
-    TF1* fAbcModel_center = new TF1("fAbcModel_center", abcModel, 0, 12000, 3);
-    fAbcModel_center->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
-    gResol_center->Fit(fAbcModel_center);
-    TGraphErrors* gExtra = new TGraphErrors();
-    //double *err_real = gResol_real[0]->GetEY();
-    //double *err_center = gResol_center->GetEY();
-    for(int i=0; i<1000; i++) {
-        double npe2 = 1500+10*i;
-        //gExtra->SetPoint(i, npe2, fAbcModel_real->Eval(npe2)- fAbcModel_center->Eval(npe2));
-        double fAbcModel_center_err = TMath::Sqrt(  TMath::Power(fAbcModel_center->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_center->GetParError(1),2) +  TMath::Power(fAbcModel_center->GetParError(2)/npe2/npe2, 2)  );
-        double fAbcModel_real_err = TMath::Sqrt(  TMath::Power(fAbcModel_real->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_real->GetParError(1),2) +  TMath::Power(fAbcModel_real->GetParError(2)/npe2/npe2, 2)  );
-        gExtra->SetPoint(i, npe2, (fAbcModel_real->Eval(npe2)*fAbcModel_real->Eval(npe2) - fAbcModel_center->Eval(npe2)*fAbcModel_center->Eval(npe2)));
-        gExtra->SetPointError(i, 0, TMath::Sqrt(TMath::Power(2*fAbcModel_center_err, 2) + TMath::Power(fAbcModel_real_err,2)) );
-        //double fAbcModel_center_err_abs = TMath::Sqrt(  TMath::Power(fAbcModel_center->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_center->GetParError(1),2) +  TMath::Power(fAbcModel_center->GetParError(2)/npe2/npe2, 2)  ) / TMath::Sqrt(fAbcModel_center->Eval(npe2));
+    //gStyle->SetOptFit(1111);
+    //TF1* fAbcModel_ideal = new TF1("fAbcModel_ideal", abcModel, 0, 12000, 3);
+    //fAbcModel_ideal->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
+    //gResol_ideal->Fit(fAbcModel_ideal);
+    //TF1* fAbcModel_real = new TF1("fAbcModel_real", abcModel, 0, 12000, 3);
+    //fAbcModel_real->SetParameters(1.3, 6.5e-5, -300);
+    //gResol_real[0]->Fit(fAbcModel_real);
+    //TF1* fAbcModel_center = new TF1("fAbcModel_center", abcModel, 0, 12000, 3);
+    //fAbcModel_center->SetParameters(0.98*0.98, 6.62*6.62*1e-6, 0);
+    //gResol_center->Fit(fAbcModel_center);
+    //TGraphErrors* gExtra = new TGraphErrors();
+    ////double *err_real = gResol_real[0]->GetEY();
+    ////double *err_center = gResol_center->GetEY();
+    //for(int i=0; i<1000; i++) {
+    //    double npe2 = 1500+10*i;
+    //    //gExtra->SetPoint(i, npe2, fAbcModel_real->Eval(npe2)- fAbcModel_center->Eval(npe2));
+    //    double fAbcModel_center_err = TMath::Sqrt(  TMath::Power(fAbcModel_center->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_center->GetParError(1),2) +  TMath::Power(fAbcModel_center->GetParError(2)/npe2/npe2, 2)  );
+    //    double fAbcModel_real_err = TMath::Sqrt(  TMath::Power(fAbcModel_real->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_real->GetParError(1),2) +  TMath::Power(fAbcModel_real->GetParError(2)/npe2/npe2, 2)  );
+    //    gExtra->SetPoint(i, npe2, (fAbcModel_real->Eval(npe2)*fAbcModel_real->Eval(npe2) - fAbcModel_center->Eval(npe2)*fAbcModel_center->Eval(npe2)));
+    //    gExtra->SetPointError(i, 0, TMath::Sqrt(TMath::Power(2*fAbcModel_center_err, 2) + TMath::Power(fAbcModel_real_err,2)) );
+    //    //double fAbcModel_center_err_abs = TMath::Sqrt(  TMath::Power(fAbcModel_center->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_center->GetParError(1),2) +  TMath::Power(fAbcModel_center->GetParError(2)/npe2/npe2, 2)  ) / TMath::Sqrt(fAbcModel_center->Eval(npe2));
         //double fAbcModel_real_err_abs = TMath::Sqrt(  TMath::Power(fAbcModel_real->GetParError(0)/npe2, 2) + TMath::Power(fAbcModel_real->GetParError(1),2) +  TMath::Power(fAbcModel_real->GetParError(2)/npe2/npe2, 2)  ) / TMath::Sqrt(fAbcModel_real->Eval(npe2));
         //gExtra->SetPoint(i, npe2, fAbcModel_real->Eval(npe2)-fAbcModel_center->Eval(npe2));
         //gExtra->SetPointError(i, 0, TMath::Sqrt(fAbcModel_center_err_abs*fAbcModel_center_err_abs + fAbcModel_real_err_abs*fAbcModel_real_err_abs));
-    }
+    //}
 
-    TFile* of = new TFile("e1MeV_pred_bterm_smear0mm.root", "recreate");
-    gExtra->SetName("pred");
-    gExtra->Write();
-    of->Close();
+    //TFile* of = new TFile("e1MeV_pred_bterm_smear0mm.root", "recreate");
+    //gExtra->SetName("pred");
+    //gExtra->Write();
+    //of->Close();
 
     //TCanvas* c1 = new TCanvas(); c1->cd();
     //gExtra->SetLineWidth(2);

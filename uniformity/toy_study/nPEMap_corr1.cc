@@ -75,14 +75,15 @@ int main(int argc, char* argv[])
 
 
     int startNo = atoi(argv[1]);
-    int nFiles = 10;
+    int nFiles = 20;
     for(int i=startNo; i<startNo+nFiles; i++) {
         //string no = to_string(i);
         stringstream ss;
         ss << i;
         string no = ss.str();
-        string filename = "/junofs/users/yumiao/simulation/energy_model/production/electron/cerenkov/2000keV/sample_detsim_user.root";
-        //string filename = "./uniform/8MeV/user-detsim-"+no+".root";
+        //string filename = "/junofs/users/yumiao/simulation/energy_model/production/electron/cerenkov/2000keV/sample_detsim_user.root";
+        string filename = "/scratchfs/higgs/yumiao/production/uniform/Ge68/user-detsim-"+no+".root";
+        //string filename = "../../uniformity/electron/uniform/1MeV/user-detsim-"+no+".root";
         cout << "Processing " << filename << endl;
         TFile* ff; TTree* evt;
         ff = TFile::Open(filename.c_str());
@@ -96,13 +97,16 @@ int main(int argc, char* argv[])
         evt->SetBranchAddress("PMTID_byPMT", m_pmtid_bypmt, &b_pmtid_bypmt);
         evt->SetBranchAddress("nPE_byPMT", m_npe_bypmt, &b_npe_bypmt);
         //cout << evt->GetEntries() <<endl;
+        //for(int iEntry=0; iEntry<1; iEntry++) {
         for(int iEntry=0; iEntry<evt->GetEntries(); iEntry++) {
-            cout << "Processing " << iEntry << endl;
+            //cout << "Processing " << iEntry << endl;
             evt->GetEntry(iEntry);
             TStopwatch timer;
             timer.Start();
             double R_source = TMath::Sqrt(m_edepX*m_edepX+m_edepY*m_edepY+m_edepZ*m_edepZ);
-            if(R_source>17700) R_source = 17700-0.001;
+            //if(R_source>17700) R_source = 17700-0.001;
+            double F = 180/TMath::Power(17400, 3);
+            if( R_source >= 17400 ) continue;
             //if(R_source>15500) continue;   // 15.5m fidicial volume cut
             //int rbinid = int(R_source*R_source*R_source/1000000000/(r3_max/nbin_r)-0.00001);
             double theta_source = TMath::ACos(m_edepZ/R_source);
@@ -216,13 +220,15 @@ void load_pmt()
 
 void load_nPEMap()
 {
-    TFile* lfile = TFile::Open("/cvmfs/juno.ihep.ac.cn/sl6_amd64_gcc830/Pre-Release/J20v1r0-Pre2/data/Reconstruction/OMILREC/RecMap/nPEMap/LnPEMapFile_Truth.root");
+    //TFile* lfile = TFile::Open("/cvmfs/juno.ihep.ac.cn/sl6_amd64_gcc830/Pre-Release/J20v1r0-Pre2/data/Reconstruction/OMILREC/RecMap/nPEMap/LnPEMapFile_Truth.root"); //240 CLS e+ 0MeV
+    TFile* lfile = TFile::Open("/junofs/users/huanggh/EnergyRec/GenCalibData/ACU_CLS_MAP/nPEMap_Truth/J20v1r1-Pre0/QTMap_Positron_RandomCalibPos/share/Truth/Rec_Dyn_FHS/RecMap_CubicR3/nPEMap/LnPEMapFile_Truth.root"); // 2000 e+ 0MeV
     for(int i=0; i<1440; i++) {
         LMu2D[i] = (TH2D*)lfile->Get(Form("hLMu2D_%d", i));
     }
     //lfile->Close();
 
-    TFile* sfile = TFile::Open("/cvmfs/juno.ihep.ac.cn/sl6_amd64_gcc830/Pre-Release/J20v1r0-Pre2/data/Reconstruction/OMILREC/RecMap/nPEMap/SnPEMapFile_Truth.root");
+    //TFile* sfile = TFile::Open("/cvmfs/juno.ihep.ac.cn/sl6_amd64_gcc830/Pre-Release/J20v1r0-Pre2/data/Reconstruction/OMILREC/RecMap/nPEMap/SnPEMapFile_Truth.root"); // 240 CLS e+ 0MeV
+    TFile* sfile = TFile::Open("/junofs/users/huanggh/EnergyRec/GenCalibData/ACU_CLS_MAP/nPEMap_Truth/J20v1r1-Pre0/QTMap_Positron_RandomCalibPos/share/Truth/Rec_Dyn_FHS/RecMap_CubicR3/nPEMap/SnPEMapFile_Truth.root"); // 2000 e+ 0MeV
     for(int i=0; i<1440; i++) {
         SMu2D[i] = (TH2D*)sfile->Get(Form("hSMu2D_%d", i));
     }
@@ -240,8 +246,13 @@ double pred_nPE_Lpmt(double R_source, double theta_source, double theta_pmt) {
     if(theta_pmt_bin1==MaxBin) { theta_pmt_bin1 = MaxBin-1; theta_pmt_bin2 = theta_pmt_bin1;}
     else if (theta_pmt_bin2==MaxBin) {theta_pmt_bin2 = theta_pmt_bin1;}
 
+    // with 2000 points, need an extra transform ...
+    double F = 180/TMath::Power(17400, 3);
+    R_source = F * TMath::Power(R_source, 3);
+
     //cout << "LPMT: "<< theta_pmt_bin1 << " " << theta_pmt_bin2 << endl;
-        
+    //cout << R_source << " " << theta_source << endl;  
+
     double scale1 = LMu2D[theta_pmt_bin1]->Interpolate(R_source, theta_source);
     double scale2 = LMu2D[theta_pmt_bin2]->Interpolate(R_source, theta_source);
     double ThetaAFrac = theta_pmt - double(theta_pmt_bin1)*MapThetaStep;
@@ -268,6 +279,11 @@ double pred_nPE_Spmt(double R_source, double theta_source, double theta_pmt) {
     if(theta_pmt_bin1==MaxBin) { theta_pmt_bin1 = MaxBin-1; theta_pmt_bin2 = theta_pmt_bin1;}
     else if (theta_pmt_bin2==MaxBin) {theta_pmt_bin2 = theta_pmt_bin1;}
     //cout << "SPMT: "<< theta_pmt_bin1 << " " << theta_pmt_bin2 << endl;
+    
+    // with 2000 points, need an extra transform ...
+    double F = 180/TMath::Power(17400, 3);
+    R_source = F * TMath::Power(R_source, 3);
+    //cout << R_source << " " << theta_source << endl;  
 
     double scale1 = SMu2D[theta_pmt_bin1]->Interpolate(R_source, theta_source);
     double scale2 = SMu2D[theta_pmt_bin2]->Interpolate(R_source, theta_source);
