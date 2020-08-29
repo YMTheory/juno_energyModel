@@ -3,4 +3,5 @@ model/__pycache__/
 *.root
 *.txt
 model/examples
-uniform/toy_study/plots
+uniformity/toy_study/plots
+uniformity/data

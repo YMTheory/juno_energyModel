@@ -12,11 +12,11 @@ import seaborn as sns
 from ROOT import TH2D, TCanvas, TProfile2D, gStyle, TFile
 import uproot as up
 
-r3max = 17.4**3
+r3max = 17.2**3
 deltar = r3max / 20.
 
-data = np.loadtxt("./OrgCalibPos.txt", delimiter=" ")
-#data = np.loadtxt("./OrgCalibPos_Random2000.txt", delimiter=" ")
+#data = np.loadtxt("./OrgCalibPos.txt", delimiter=" ")
+data = np.loadtxt("./OrgCalibPos_Random2000.txt", delimiter=" ")
 posx, posz = data[:, 0], data[:, 1]
 
 print("Total CLS Points: %d" % len(posx) )
@@ -40,15 +40,14 @@ for r, t in zip(edepR3, costh):
     
 print(mtx)
 
-#hist2d_source_number = TH2D("source_number", "", 20, 0, r3max, 10, -1 ,1)
 hist2d_source_number = TH2D("source_number", "", 20, 0, r3max, 10, -1 ,1)
 for i in range(20):
     for j in range(10):
         hist2d_source_number.SetBinContent( i+1, j+1, mtx[j][i] )
 
 
-infile = up.open("../../uniformity/gamma/Ge68.root")
-#infile = up.open("pe1MeV_2000cls.root")
+#infile = up.open("../../../uniformity/gamma/Ge68.root")
+infile = up.open("../data/Ge68_CLS2000_new.root")
 edepR = infile["petree"].array("edepR")
 evis = infile["petree"].array("evis")
 edepZ = infile["petree"].array("edepZ")
@@ -62,7 +61,7 @@ for r, e, z in zip(edepR, evis, edepZ):
 
 
 gStyle.SetOptStat(0)
-out = TFile("CLS240.root", "recreate")
+out = TFile("CLS2000_new.root", "recreate")
 #cc = TCanvas()
 #prof2d.SetTitle("2000 CLS; R^3/m^3; cos_theta")
 #prof2d.SetBarOffset(0.2)
