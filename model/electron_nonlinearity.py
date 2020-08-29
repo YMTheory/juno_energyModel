@@ -49,14 +49,20 @@ class electron_nonlinearity(object):
 
 
     def quench_NL(self, Etrue):
-        idx = int(Etrue/0.001) if Etrue<=0.1 else int((Etrue-0.1)/0.01)+100
-        return self.quenchNL[idx]
+        """ linear interpolation"""
+        idx1 = int(Etrue/0.001) if Etrue<=0.1 else int((Etrue-0.1)/0.01)+100
+        idx2 = idx1+1
+        frac = (Etrue-0.001*idx1)/0.001 if Etrue<=0.1 else (Etrue-0.1-0.01*(idx1-100))/0.01
+        return self.quenchNL[idx1]*(1-frac) + self.quenchNL[idx2]*frac
 
 
 
     def cerenkov_NL(self, Etrue):
-        idx = int(Etrue/0.01)
-        return (self.cerNL[idx])/Etrue/glo.get_value("energy_scale")
+        """ linear interpolation"""
+        idx1 = int(Etrue/0.01)
+        idx2 = idx1+1
+        frac = (Etrue-0.01*idx1)/0.01
+        return (self.cerNL[idx1])/Etrue/glo.get_value("energy_scale")*(1-frac) + (self.cerNL[idx2])/Etrue/glo.get_value("energy_scale")*frac
 
 
     def total_NL(self, Etrue):
