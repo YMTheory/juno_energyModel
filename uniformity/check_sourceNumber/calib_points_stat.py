@@ -12,11 +12,11 @@ import seaborn as sns
 from ROOT import TH2D, TCanvas, TProfile2D, gStyle, TFile
 import uproot as up
 
-r3max = 16.5**3
+r3max = 17.2**3
 deltar = r3max / 20.
 
-#data = np.loadtxt("./OrgCalibPos.txt", delimiter=" ")
-data = np.loadtxt("./OrgCalibPos_Random2000.txt", delimiter=" ")
+data = np.loadtxt("./OrgCalibPos.txt", delimiter=" ")
+#data = np.loadtxt("./OrgCalibPos_Random2000.txt", delimiter=" ")
 posx, posz = data[:, 0], data[:, 1]
 
 print("Total CLS Points: %d" % len(posx) )
@@ -47,7 +47,7 @@ for i in range(20):
 
 
 #infile = up.open("../../../uniformity/gamma/Ge68.root")
-infile = up.open("../data/Ge68_CLS2000_new.root")
+infile = up.open("../data/Ge68_CLS240_new.root")
 edepR = infile["petree"].array("edepR")
 evis = infile["petree"].array("evis")
 edepZ = infile["petree"].array("edepZ")
@@ -61,7 +61,7 @@ for r, e, z in zip(edepR, evis, edepZ):
 
 
 gStyle.SetOptStat(0)
-out = TFile("CLS2000_16500cut.root", "recreate")
+out = TFile("CLS240_17200cut.root", "recreate")
 #cc = TCanvas()
 #prof2d.SetTitle("2000 CLS; R^3/m^3; cos_theta")
 #prof2d.SetBarOffset(0.2)
