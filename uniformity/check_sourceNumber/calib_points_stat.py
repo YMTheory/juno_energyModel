@@ -12,7 +12,7 @@ import seaborn as sns
 from ROOT import TH2D, TCanvas, TProfile2D, gStyle, TFile
 import uproot as up
 
-r3max = 17.2**3
+r3max = 16.5**3
 deltar = r3max / 20.
 
 #data = np.loadtxt("./OrgCalibPos.txt", delimiter=" ")
@@ -61,7 +61,7 @@ for r, e, z in zip(edepR, evis, edepZ):
 
 
 gStyle.SetOptStat(0)
-out = TFile("CLS2000_new.root", "recreate")
+out = TFile("CLS2000_16500cut.root", "recreate")
 #cc = TCanvas()
 #prof2d.SetTitle("2000 CLS; R^3/m^3; cos_theta")
 #prof2d.SetBarOffset(0.2)
